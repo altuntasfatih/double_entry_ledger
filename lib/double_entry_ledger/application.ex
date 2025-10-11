@@ -12,7 +12,7 @@ defmodule DoubleEntryLedger.Application do
     Supervisor.start_link(children, opts)
   end
 
-  defp tiger_beetle_config() do
+  defp tiger_beetle_config do
     tiger_beetle_config = Application.get_env(:double_entry_ledger, :tigerbeetlex, [])
 
     [

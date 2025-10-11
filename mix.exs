@@ -20,7 +20,11 @@ defmodule DoubleEntryLedger.MixProject do
 
   def deps do
     [
-      {:tigerbeetlex, "~> 0.16.60"}
+      {:tigerbeetlex, "~> 0.16.60"},
+      # Development/test only
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
     ]
   end
 end
