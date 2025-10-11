@@ -1,10 +1,7 @@
 defmodule DoubleEntryLedgerTest do
   use DoubleEntryLedger.DataCase
 
-  alias DoubleEntryLedger.AccountType
-  alias TigerBeetlex.ID
-
-  @test_ledger 999
+  @default_ledger Ledger.default_casino_ledger()
 
   # user balance is a liability account
   # credit increase, debit decrease so debit must not exceed credits
@@ -14,16 +11,15 @@ defmodule DoubleEntryLedgerTest do
 
     assert DoubleEntryLedger.create_account(
              account_id,
-             @test_ledger,
-             AccountType.user_balance_liability(),
+             Account.user_balance_liability_code(),
              user_id
            ) ==
              {:ok, []}
 
     assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
     assert account.id == ID.from_int(account_id)
-    assert account.ledger == @test_ledger
-    assert account.code == AccountType.user_balance_liability()
+    assert account.ledger == @default_ledger
+    assert account.code == Account.user_balance_liability_code()
     assert account.user_data_128 == <<user_id::128>>
 
     assert account.flags ==
@@ -35,15 +31,14 @@ defmodule DoubleEntryLedgerTest do
 
     assert DoubleEntryLedger.create_account(
              account_id,
-             @test_ledger,
-             AccountType.system_revenue_equity()
+             Account.system_revenue_equity_code()
            ) ==
              {:ok, []}
 
     assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
     assert account.id == ID.from_int(account_id)
-    assert account.ledger == @test_ledger
-    assert account.code == AccountType.system_revenue_equity()
+    assert account.ledger == @default_ledger
+    assert account.code == Account.system_revenue_equity_code()
     assert account.user_data_128 == <<0::128>>
 
     assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
@@ -54,15 +49,14 @@ defmodule DoubleEntryLedgerTest do
 
     assert DoubleEntryLedger.create_account(
              account_id,
-             @test_ledger,
-             AccountType.cash_external_asset()
+             Account.cash_external_asset_code()
            ) ==
              {:ok, []}
 
     assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
     assert account.id == ID.from_int(account_id)
-    assert account.ledger == @test_ledger
-    assert account.code == AccountType.cash_external_asset()
+    assert account.ledger == @default_ledger
+    assert account.code == Account.cash_external_asset_code()
     assert account.user_data_128 == <<0::128>>
 
     assert account.flags == struct(TigerBeetlex.AccountFlags, %{})

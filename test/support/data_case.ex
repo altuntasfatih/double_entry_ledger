@@ -18,8 +18,9 @@ defmodule DoubleEntryLedger.DataCase do
 
   using do
     quote do
-      alias DoubleEntryLedger.AccountType
-      alias DoubleEntryLedger.Ledger
+      alias DoubleEntryLedger.Schema.Account
+      alias DoubleEntryLedger.Schema.Ledger
+      alias TigerBeetlex.ID
 
       import DoubleEntryLedger.DataCase
       import DoubleEntryLedger.Factory
