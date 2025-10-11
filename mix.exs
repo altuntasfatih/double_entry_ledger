@@ -8,6 +8,7 @@ defmodule DoubleEntryLedger.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
+      dialyzer: dialyzer(),
       deps: deps()
     ]
   end
@@ -22,6 +23,14 @@ defmodule DoubleEntryLedger.MixProject do
   # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  # Dialyzer configuration
+  defp dialyzer do
+    [
+      ignore_warnings: ".dialyzer_ignore.exs",
+      plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+    ]
+  end
 
   def deps do
     [

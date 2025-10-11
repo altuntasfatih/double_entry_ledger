@@ -38,7 +38,7 @@ defmodule DoubleEntryLedger do
 
   def ensure_cash_external_asset_account do
     case query_account(Account.cash_external_asset_code(), Ledger.default_casino_ledger()) do
-      {:ok, %{id: cash_external_asset_id}} ->
+      {:ok, [%{id: cash_external_asset_id}]} ->
         {:ok, cash_external_asset_id}
 
       _ ->
