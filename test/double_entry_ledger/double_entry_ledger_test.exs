@@ -67,6 +67,4 @@ defmodule DoubleEntryLedgerTest do
 
     assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
   end
-
-
 end
