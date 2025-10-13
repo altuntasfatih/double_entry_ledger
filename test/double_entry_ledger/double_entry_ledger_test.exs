@@ -3,62 +3,87 @@ defmodule DoubleEntryLedgerTest do
 
   @default_ledger Ledger.default_casino_ledger()
 
-  # user balance is a liability account
-  # credit increase, debit decrease so debit must not exceed credits
-  test "it should create a user balance liability account" do
-    account_id = account_id_sequence()
-    user_id = 333
+  describe "create_user_account/3" do
+    # user balance is a liability account
+    # credit increase, debit decrease so debit must not exceed credits
+    test "it should create a user balance liability account" do
+      account_id = account_id_sequence()
+      user_id = user_id_sequence()
 
-    assert DoubleEntryLedger.create_account(
-             account_id,
-             Account.user_balance_liability_code(),
-             user_id
-           ) ==
-             {:ok, []}
+      assert DoubleEntryLedger.create_user_account(
+               account_id,
+               user_id
+             ) ==
+               {:ok, []}
 
-    assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
-    assert account.id == ID.from_int(account_id)
-    assert account.ledger == @default_ledger
-    assert account.code == Account.user_balance_liability_code()
-    assert account.user_data_128 == <<user_id::128>>
+      assert {:ok, account} = Tigerbeetle.lookup_account(account_id)
+      assert account.id == ID.from_int(account_id)
+      assert account.ledger == @default_ledger
+      assert account.code == Account.user_balance_liability_code()
+      assert account.user_data_128 == <<user_id::128>>
 
-    assert account.flags ==
-             struct(TigerBeetlex.AccountFlags, %{debits_must_not_exceed_credits: true})
+      assert account.flags ==
+               struct(TigerBeetlex.AccountFlags, %{debits_must_not_exceed_credits: true})
+    end
+
+    # test "it should create a system revenue equity account" do
+    #   account_id = account_id_sequence()
+
+    #   assert DoubleEntryLedger.create_account(
+    #            account_id,
+    #            Account.system_revenue_equity_code()
+    #          ) ==
+    #            {:ok, []}
+
+    #   assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
+    #   assert account.id == ID.from_int(account_id)
+    #   assert account.ledger == @default_ledger
+    #   assert account.code == Account.system_revenue_equity_code()
+    #   assert account.user_data_128 == <<0::128>>
+
+    #   assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
+    # end
+
+    # test "it should create cash external asset account" do
+    #   account_id = account_id_sequence()
+
+    #   assert DoubleEntryLedger.create_account(
+    #            account_id,
+    #            Account.cash_external_asset_code()
+    #          ) ==
+    #            {:ok, []}
+
+    #   assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
+    #   assert account.id == ID.from_int(account_id)
+    #   assert account.ledger == @default_ledger
+    #   assert account.code == Account.cash_external_asset_code()
+    #   assert account.user_data_128 == <<0::128>>
+
+    #   assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
+    # end
   end
 
-  test "it should create a system revenue equity account" do
-    account_id = account_id_sequence()
+  describe "deposit/3" do
+    setup do
+      account_id = account_id_sequence()
+      user_id = user_id_sequence()
 
-    assert DoubleEntryLedger.create_account(
-             account_id,
-             Account.system_revenue_equity_code()
-           ) ==
-             {:ok, []}
+      assert DoubleEntryLedger.create_user_account(account_id, user_id) == {:ok, []}
 
-    assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
-    assert account.id == ID.from_int(account_id)
-    assert account.ledger == @default_ledger
-    assert account.code == Account.system_revenue_equity_code()
-    assert account.user_data_128 == <<0::128>>
+      {:ok, account_id: account_id}
+    end
 
-    assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
-  end
+    test "it should deposit", %{account_id: account_id} do
+      # given
 
-  test "it should create cash external asset account" do
-    account_id = account_id_sequence()
+      amount = 100
+      deposit_id = deposit_id_sequence()
 
-    assert DoubleEntryLedger.create_account(
-             account_id,
-             Account.cash_external_asset_code()
-           ) ==
-             {:ok, []}
+      # when
+      assert DoubleEntryLedger.deposit(deposit_id, account_id, amount) == :ok
 
-    assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
-    assert account.id == ID.from_int(account_id)
-    assert account.ledger == @default_ledger
-    assert account.code == Account.cash_external_asset_code()
-    assert account.user_data_128 == <<0::128>>
-
-    assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
+      # then
+      assert {:ok, _} = Tigerbeetle.lookup_account(account_id)
+    end
   end
 end

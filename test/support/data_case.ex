@@ -20,6 +20,7 @@ defmodule DoubleEntryLedger.DataCase do
     quote do
       alias DoubleEntryLedger.Schema.Account
       alias DoubleEntryLedger.Schema.Ledger
+      alias DoubleEntryLedger.Tigerbeetle
       alias TigerBeetlex.ID
 
       import DoubleEntryLedger.DataCase
