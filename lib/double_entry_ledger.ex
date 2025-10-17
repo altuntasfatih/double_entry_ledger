@@ -29,31 +29,32 @@ defmodule DoubleEntryLedger do
     with {:ok, %{id: user_liability_id, ledger: ledger}} <-
            fetch_account(account_id, Account.user_balance_liability_code()),
          {:ok, %{id: cash_asset_id, ledger: ^ledger}} <-
-           ensure_cash_external_asset_account() do
-      IO.inspect(user_liability_id, label: "user_liability_id")
-      IO.inspect(cash_asset_id, label: "cash_asset_id")
-
-      deposit(
-        deposit_id,
-        user_liability_id,
-        cash_asset_id,
-        ledger,
-        amount
-      )
+           ensure_cash_external_asset_account(),
+         {:ok, []} <-
+           deposit(
+             deposit_id,
+             user_liability_id,
+             cash_asset_id,
+             ledger,
+             amount
+           ) do
+      :ok
     end
   end
 
   defp deposit(deposit_id, user_balance_liability_id, cash_external_asset_id, ledger, amount)
-       when amount > 0 do
-    _transfer = %TigerBeetlex.Transfer{
+       when amount > 0 and is_binary(user_balance_liability_id) and
+              is_binary(cash_external_asset_id) do
+    %TigerBeetlex.Transfer{
       id: <<deposit_id::128>>,
-      debit_account_id: ID.from_int(cash_external_asset_id),
-      credit_account_id: ID.from_int(user_balance_liability_id),
+      debit_account_id: cash_external_asset_id,
+      credit_account_id: user_balance_liability_id,
       ledger: ledger,
       code: TransferType.deposit(),
       amount: amount,
       flags: struct(TigerBeetlex.TransferFlags, %{})
     }
+    |> Tigerbeetle.create_transfer()
   end
 
   defp fetch_account(account_id, code) do
@@ -64,30 +65,20 @@ defmodule DoubleEntryLedger do
   end
 
   defp ensure_cash_external_asset_account do
-    IO.inspect(
-      Tigerbeetle.query_accounts(
-        Ledger.default_casino_ledger(),
-        Account.cash_external_asset_code(),
-        Account.static_account_ids(:cash_external_asset),
-        1
-      ),
-      label: "cash_external_asset_account"
-    )
+    cash_account_id = Account.static_account_ids(:cash_external_asset)
+    code = Account.cash_external_asset_code()
+    ledger = Ledger.default_casino_ledger()
 
-    with {:error, :accounts_not_found} <-
-           Tigerbeetle.query_accounts(
-             Ledger.default_casino_ledger(),
-             Account.cash_external_asset_code(),
-             Account.static_account_ids(:cash_external_asset),
-             1
-           ) do
-      Tigerbeetle.create_account(
-        Account.static_account_ids(:cash_external_asset),
-        Ledger.default_casino_ledger(),
-        Account.cash_external_asset_code(),
-        %{},
-        Account.static_account_ids(:cash_external_asset)
-      )
+    with {:error, :not_found} <- Tigerbeetle.query_accounts(ledger, code, cash_account_id, 1),
+         {:ok, _} <-
+           Tigerbeetle.create_account(cash_account_id, ledger, code, %{}, cash_account_id) do
+      {:ok,
+       %{
+         id: ID.from_int(cash_account_id),
+         ledger: ledger
+       }}
+    else
+      {:ok, [acc]} -> {:ok, acc}
     end
   end
 end

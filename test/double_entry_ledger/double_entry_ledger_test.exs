@@ -1,4 +1,5 @@
 defmodule DoubleEntryLedgerTest do
+  alias TigerBeetlex.Account
   use DoubleEntryLedger.DataCase
 
   @default_ledger Ledger.default_casino_ledger()
@@ -73,17 +74,26 @@ defmodule DoubleEntryLedgerTest do
       {:ok, account_id: account_id}
     end
 
-    test "it should deposit", %{account_id: account_id} do
+    test "it should deposit", %{account_id: user_account_id} do
       # given
 
       amount = 100
       deposit_id = deposit_id_sequence()
 
       # when
-      assert DoubleEntryLedger.deposit(deposit_id, account_id, amount) == :ok
+      assert DoubleEntryLedger.deposit(deposit_id, user_account_id, amount) == :ok
 
-      # then
-      assert {:ok, _} = Tigerbeetle.lookup_account(account_id)
+      # credit for liability account
+      assert {:ok,
+              %{
+                credits_posted: 100
+              }} = Tigerbeetle.lookup_account(user_account_id)
+
+      # debit for asset account
+      assert {:ok,
+              %{
+                debits_posted: 100
+              }} = Tigerbeetle.lookup_account(Account.static_account_ids(:cash_external_asset))
     end
   end
 end

@@ -24,7 +24,9 @@ defmodule DoubleEntryLedger.Tigerbeetle do
     end
   end
 
-  def create_transfers(transfers) do
+  def create_transfer(t), do: create_transfers([t])
+
+  def create_transfers([_] = transfers) do
     case TigerBeetlex.Connection.create_transfers(get_connection_name!(), transfers) do
       {:ok, []} -> {:ok, []}
       {:ok, errors} -> {:error, errors}
@@ -77,7 +79,7 @@ defmodule DoubleEntryLedger.Tigerbeetle do
 
     case list do
       [%TigerBeetlex.Account{}] -> {:ok, list}
-      _ -> {:error, :accounts_not_found}
+      _ -> {:error, :not_found}
     end
   end
 
