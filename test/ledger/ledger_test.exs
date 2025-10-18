@@ -4,7 +4,7 @@ defmodule LedgerTest do
   describe "create_user_account/3" do
     setup do
       user_account_id = account_id_sequence()
-      _ = get_cash_asset_account_id()
+      _ = set_cash_asset_account_id()
 
       {:ok, user_account_id: user_account_id}
     end
@@ -30,7 +30,7 @@ defmodule LedgerTest do
 
       assert Ledger.create_user_account(user_account_id, user_account_id) == {:ok, []}
 
-      {:ok, user_account_id: user_account_id, cash_asset_account_id: get_cash_asset_account_id()}
+      {:ok, user_account_id: user_account_id, cash_asset_account_id: set_cash_asset_account_id()}
     end
 
     test "it should deposit to a user account", %{
@@ -60,6 +60,7 @@ defmodule LedgerTest do
 
   describe "withdraw_from_user_account/3" do
     setup do
+      cash_asset_account_id = set_cash_asset_account_id()
       user_account_id = account_id_sequence()
       initial_deposit_amount = 100
 
@@ -74,7 +75,7 @@ defmodule LedgerTest do
       {:ok,
        user_account_id: user_account_id,
        initial_deposit_amount: initial_deposit_amount,
-       cash_asset_account_id: get_cash_asset_account_id()}
+       cash_asset_account_id: cash_asset_account_id}
     end
 
     test "it should withdraw from a user account", %{

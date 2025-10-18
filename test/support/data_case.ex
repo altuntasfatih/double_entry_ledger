@@ -29,7 +29,7 @@ defmodule LedgerTest.DataCase do
     end
   end
 
-  def get_cash_asset_account_id do
+  def set_cash_asset_account_id do
     cash_asset_account_id = LedgerTest.Factory.cash_asset_account_id_sequence()
 
     details =
