@@ -7,6 +7,6 @@ defmodule LedgerTest.Factory do
   def cash_asset_account_id_sequence, do: sequence(:cash_asset_account_id, &(&1 + 1))
   # 0-100 accounts are reserved for system accounts
 
-  def deposit_id_sequence, do: sequence(:deposit_id, &(&1 + 10000))
-  def withdrawal_id_sequence, do: sequence(:withdrawal_id, &(&1 + 20000))
+  def deposit_id_sequence, do: sequence(:deposit_id, &(&1 + 10_000))
+  def withdrawal_id_sequence, do: sequence(:withdrawal_id, &(&1 + 20_000))
 end
