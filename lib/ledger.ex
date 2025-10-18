@@ -1,6 +1,5 @@
 defmodule Ledger do
-    alias Ledger.Schema.Account
-  alias Ledger.Schema.CasinoLedger
+  alias Ledger.Schema.Account
   alias Ledger.Schema.TransferType
   alias TigerBeetlex.ID
 
@@ -9,7 +8,7 @@ defmodule Ledger do
   # id -> use to identify account
   # code -> use to idetify account type
   # flags -> use to store additional information
-  # external_id -> use to store additional information
+  # external_id -> use to store additional information, could be user id, game id, etc.
   def create_user_account(account_id, external_id \\ 0) do
     flags =
       %{
@@ -18,8 +17,8 @@ defmodule Ledger do
 
     Tigerbeetle.create_account(
       account_id,
-      CasinoLedger.default_casino(),
-      Account.user_balance_liability_code(),
+      default_casino_ledger_id(),
+      user_liability_code(),
       flags,
       external_id
     )
@@ -27,9 +26,9 @@ defmodule Ledger do
 
   def deposit_to_user_account(deposit_id, user_account_id, amount) when amount > 0 do
     with {:ok, %{id: user_liability_id, ledger: ledger}} <-
-           fetch_account(user_account_id, Account.user_balance_liability_code()),
+           fetch_account(user_account_id, user_liability_code()),
          {:ok, %{id: cash_asset_id, ledger: ^ledger}} <-
-           ensure_cash_external_asset_account(),
+           ensure_cash_asset_account(),
          {:ok, []} <-
            deposit(
              deposit_id,
@@ -44,9 +43,9 @@ defmodule Ledger do
 
   def withdraw_from_user_account(withdrawal_id, user_account_id, amount) when amount > 0 do
     with {:ok, %{id: user_liability_id, ledger: ledger}} <-
-           fetch_account(user_account_id, Account.user_balance_liability_code()),
+           fetch_account(user_account_id, user_liability_code()),
          {:ok, %{id: cash_asset_id, ledger: ^ledger}} <-
-           ensure_cash_external_asset_account(),
+           ensure_cash_asset_account(),
          {:ok, []} <-
            withdraw(
              withdrawal_id,
@@ -59,13 +58,13 @@ defmodule Ledger do
     end
   end
 
-  defp deposit(deposit_id, user_balance_liability_id, cash_external_asset_id, ledger, amount)
-       when amount > 0 and is_binary(user_balance_liability_id) and
-              is_binary(cash_external_asset_id) do
+  defp deposit(deposit_id, user_liability_id, cash_asset_id, ledger, amount)
+       when amount > 0 and is_binary(user_liability_id) and
+              is_binary(cash_asset_id) do
     %TigerBeetlex.Transfer{
       id: <<deposit_id::128>>,
-      debit_account_id: cash_external_asset_id,
-      credit_account_id: user_balance_liability_id,
+      debit_account_id: cash_asset_id,
+      credit_account_id: user_liability_id,
       ledger: ledger,
       code: TransferType.deposit(),
       amount: amount,
@@ -74,13 +73,13 @@ defmodule Ledger do
     |> Tigerbeetle.create_transfer()
   end
 
-  defp withdraw(withdrawal_id, user_balance_liability_id, cash_external_asset_id, ledger, amount)
-       when amount > 0 and is_binary(user_balance_liability_id) and
-              is_binary(cash_external_asset_id) do
+  defp withdraw(withdrawal_id, user_liability_id, cash_asset_id, ledger, amount)
+       when amount > 0 and is_binary(user_liability_id) and
+              is_binary(cash_asset_id) do
     %TigerBeetlex.Transfer{
       id: <<withdrawal_id::128>>,
-      debit_account_id: user_balance_liability_id,
-      credit_account_id: cash_external_asset_id,
+      debit_account_id: user_liability_id,
+      credit_account_id: cash_asset_id,
       ledger: ledger,
       code: TransferType.withdrawal(),
       amount: amount,
@@ -96,10 +95,10 @@ defmodule Ledger do
     end
   end
 
-  defp ensure_cash_external_asset_account do
-    cash_account_id = Account.static_account_ids(:cash_external_asset)
-    code = Account.cash_external_asset_code()
-    ledger = CasinoLedger.default_casino()
+  defp ensure_cash_asset_account do
+    cash_account_id = cash_asset_account_id()
+    code = cash_asset_account_code()
+    ledger = default_casino_ledger_id()
 
     with {:error, :not_found} <- Tigerbeetle.query_accounts(ledger, code, cash_account_id, 1),
          {:ok, _} <-
@@ -112,5 +111,17 @@ defmodule Ledger do
     else
       {:ok, [acc]} -> {:ok, acc}
     end
+  end
+
+  defp user_liability_code, do: Account.user_liability_code()
+
+  defp cash_asset_account_code, do: Account.cash_asset_code()
+
+  defp cash_asset_account_id do
+    Application.get_env(:ledger, :ledger_details)[:cash_asset_account_id]
+  end
+
+  defp default_casino_ledger_id do
+    Application.get_env(:ledger, :ledger_details)[:default_casino_ledger_id]
   end
 end

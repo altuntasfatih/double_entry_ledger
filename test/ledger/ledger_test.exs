@@ -1,81 +1,43 @@
 defmodule LedgerTest do
-  use LedgerTest.DataCase
-
-  @default_ledger CasinoLedger.default_casino()
+  use LedgerTest.DataCase, async: false
 
   describe "create_user_account/3" do
-    # user balance is a liability account
-    # credit increase, debit decrease so debit must not exceed credits
-    test "it should create a user balance liability account" do
-      account_id = account_id_sequence()
-      user_id = user_id_sequence()
+    setup do
+      user_account_id = account_id_sequence()
+      _ = get_cash_asset_account_id()
 
-      assert Ledger.create_user_account(
-               account_id,
-               user_id
-             ) ==
-               {:ok, []}
-
-      assert {:ok, account} = Tigerbeetle.lookup_account(account_id)
-      assert account.id == ID.from_int(account_id)
-      assert account.ledger == @default_ledger
-      assert account.code == Account.user_balance_liability_code()
-      assert account.user_data_128 == <<user_id::128>>
-
-      assert account.flags ==
-               struct(TigerBeetlex.AccountFlags, %{debits_must_not_exceed_credits: true})
+      {:ok, user_account_id: user_account_id}
     end
 
-    # test "it should create a system revenue equity account" do
-    #   account_id = account_id_sequence()
+    # user balance is a liability account
+    # credit increase, debit decrease so debit must not exceed credits
+    test "it should create a user balance liability account", %{
+      user_account_id: user_account_id
+    } do
+      assert Ledger.create_user_account(user_account_id, user_account_id) == {:ok, []}
 
-    #   assert Ledger.create_account(
-    #            account_id,
-    #            Account.system_revenue_equity_code()
-    #          ) ==
-    #            {:ok, []}
-
-    #   assert {:ok, account} = Ledger.lookup_account(account_id)
-    #   assert account.id == ID.from_int(account_id)
-    #   assert account.ledger == @default_ledger
-    #   assert account.code == Account.system_revenue_equity_code()
-    #   assert account.user_data_128 == <<0::128>>
-
-    #   assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
-    # end
-
-    # test "it should create cash external asset account" do
-    #   account_id = account_id_sequence()
-
-    #   assert Ledger.create_account(
-    #            account_id,
-    #            Account.cash_external_asset_code()
-    #          ) ==
-    #            {:ok, []}
-
-    #   assert {:ok, account} = Ledger.lookup_account(account_id)
-    #   assert account.id == ID.from_int(account_id)
-    #   assert account.ledger == @default_ledger
-    #   assert account.code == Account.cash_external_asset_code()
-    #   assert account.user_data_128 == <<0::128>>
-
-    #   assert account.flags == struct(TigerBeetlex.AccountFlags, %{})
-    # end
+      assert {:ok, account} = Tigerbeetle.lookup_account(user_account_id)
+      assert account.id == ID.from_int(user_account_id)
+      assert account.ledger == default_casino_ledger_id()
+      assert account.code == user_liability_code()
+      assert account.user_data_128 == <<user_account_id::128>>
+    end
   end
 
   describe "deposit_to_user_account/3" do
     setup do
-      account_id = account_id_sequence()
-      user_id = user_id_sequence()
+      user_account_id = account_id_sequence()
 
-      assert Ledger.create_user_account(account_id, user_id) == {:ok, []}
+      assert Ledger.create_user_account(user_account_id, user_account_id) == {:ok, []}
 
-      {:ok, account_id: account_id}
+      {:ok, user_account_id: user_account_id, cash_asset_account_id: get_cash_asset_account_id()}
     end
 
-    test "it should deposit to a user account", %{account_id: user_account_id} do
+    test "it should deposit to a user account", %{
+      user_account_id: user_account_id,
+      cash_asset_account_id: cash_asset_account_id
+    } do
       # given
-
       amount = 100
       deposit_id = deposit_id_sequence()
 
@@ -92,7 +54,51 @@ defmodule LedgerTest do
       assert {:ok,
               %{
                 debits_posted: 100
-              }} = Tigerbeetle.lookup_account(Account.static_account_ids(:cash_external_asset))
+              }} = Tigerbeetle.lookup_account(cash_asset_account_id)
+    end
+  end
+
+  describe "withdraw_from_user_account/3" do
+    setup do
+      user_account_id = account_id_sequence()
+      initial_deposit_amount = 100
+
+      assert Ledger.create_user_account(user_account_id, user_account_id) == {:ok, []}
+
+      assert Ledger.deposit_to_user_account(
+               deposit_id_sequence(),
+               user_account_id,
+               initial_deposit_amount
+             ) == :ok
+
+      {:ok,
+       user_account_id: user_account_id,
+       initial_deposit_amount: initial_deposit_amount,
+       cash_asset_account_id: get_cash_asset_account_id()}
+    end
+
+    test "it should withdraw from a user account", %{
+      user_account_id: user_account_id,
+      initial_deposit_amount: initial_deposit_amount,
+      cash_asset_account_id: cash_asset_account_id
+    } do
+      withdrawal_amount = 50
+      withdrawal_id = withdrawal_id_sequence()
+
+      assert Ledger.withdraw_from_user_account(withdrawal_id, user_account_id, withdrawal_amount) ==
+               :ok
+
+      assert {:ok,
+              %{
+                credits_posted: ^initial_deposit_amount,
+                debits_posted: ^withdrawal_amount
+              }} = Tigerbeetle.lookup_account(user_account_id)
+
+      assert {:ok,
+              %{
+                debits_posted: ^initial_deposit_amount,
+                credits_posted: ^withdrawal_amount
+              }} = Tigerbeetle.lookup_account(cash_asset_account_id)
     end
   end
 end

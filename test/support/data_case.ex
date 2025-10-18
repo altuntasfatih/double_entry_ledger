@@ -16,10 +16,11 @@ defmodule LedgerTest.DataCase do
 
   use ExUnit.CaseTemplate
 
+  alias Ledger.Schema.Account
+
   using do
     quote do
       alias Ledger.Schema.Account
-      alias Ledger.Schema.CasinoLedger
       alias Ledger.Tigerbeetle
       alias TigerBeetlex.ID
 
@@ -27,4 +28,22 @@ defmodule LedgerTest.DataCase do
       import LedgerTest.Factory
     end
   end
+
+  def get_cash_asset_account_id do
+    cash_asset_account_id = LedgerTest.Factory.cash_asset_account_id_sequence()
+
+    details =
+      Application.get_env(:ledger, :ledger_details)
+      |> Keyword.put(:cash_asset_account_id, cash_asset_account_id)
+
+    :ok = Application.put_env(:ledger, :ledger_details, details)
+
+    cash_asset_account_id
+  end
+
+  def user_liability_code, do: Account.user_liability_code()
+  def cash_asset_code, do: Account.cash_asset_code()
+
+  def default_casino_ledger_id,
+    do: Application.get_env(:ledger, :ledger_details)[:default_casino_ledger_id]
 end
