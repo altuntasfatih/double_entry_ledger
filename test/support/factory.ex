@@ -1,4 +1,4 @@
-defmodule DoubleEntryLedger.Factory do
+defmodule LedgerTest.Factory do
   use ExMachina
 
   @spec account_id_sequence() :: any()

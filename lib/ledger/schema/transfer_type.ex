@@ -1,4 +1,4 @@
-defmodule DoubleEntryLedger.Schema.TransferType do
+defmodule Ledger.Schema.TransferType do
   @type transfer_type ::
           :deposit
           | :withdrawal

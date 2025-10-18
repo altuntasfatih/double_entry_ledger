@@ -1,4 +1,4 @@
-defmodule DoubleEntryLedger.Schema.Account do
+defmodule Ledger.Schema.Account do
   @type account_type ::
           :cash_external_asset
           | :game_bet_pool_liability

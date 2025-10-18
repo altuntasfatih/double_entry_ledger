@@ -1,4 +1,4 @@
-defmodule DoubleEntryLedger.DataCase do
+defmodule LedgerTest.DataCase do
   @moduledoc """
   This module defines the setup for tests requiring
   access to the application's data layer.
@@ -10,7 +10,7 @@ defmodule DoubleEntryLedger.DataCase do
   we enable the SQL sandbox, so changes done to the database
   are reverted at the end of every test. If you are using
   PostgreSQL, you can even run database tests asynchronously
-  by setting `use TigerLedgerFlask.DataCase, async: true`, although
+  by setting `use Ledger.DataCase, async: true`, although
   this option is not recommended for other databases.
   """
 
@@ -18,13 +18,13 @@ defmodule DoubleEntryLedger.DataCase do
 
   using do
     quote do
-      alias DoubleEntryLedger.Schema.Account
-      alias DoubleEntryLedger.Schema.Ledger
-      alias DoubleEntryLedger.Tigerbeetle
+      alias Ledger.Schema.Account
+      alias Ledger.Schema.CasinoLedger
+      alias Ledger.Tigerbeetle
       alias TigerBeetlex.ID
 
-      import DoubleEntryLedger.DataCase
-      import DoubleEntryLedger.Factory
+      import LedgerTest.DataCase
+      import LedgerTest.Factory
     end
   end
 end

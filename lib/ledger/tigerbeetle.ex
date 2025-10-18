@@ -1,4 +1,4 @@
-defmodule DoubleEntryLedger.Tigerbeetle do
+defmodule Ledger.Tigerbeetle do
   alias TigerBeetlex.ID
 
   require Logger
@@ -94,6 +94,6 @@ defmodule DoubleEntryLedger.Tigerbeetle do
 
   defp get_connection_name!,
     do:
-      Application.get_env(:double_entry_ledger, :tigerbeetlex, [])
+      Application.get_env(:ledger, :tigerbeetlex, [])
       |> Keyword.fetch!(:connection_name)
 end

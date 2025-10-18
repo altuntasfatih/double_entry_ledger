@@ -1,8 +1,7 @@
-defmodule DoubleEntryLedgerTest do
-  alias TigerBeetlex.Account
-  use DoubleEntryLedger.DataCase
+defmodule LedgerTest do
+  use LedgerTest.DataCase
 
-  @default_ledger Ledger.default_casino_ledger()
+  @default_ledger CasinoLedger.default_casino()
 
   describe "create_user_account/3" do
     # user balance is a liability account
@@ -11,7 +10,7 @@ defmodule DoubleEntryLedgerTest do
       account_id = account_id_sequence()
       user_id = user_id_sequence()
 
-      assert DoubleEntryLedger.create_user_account(
+      assert Ledger.create_user_account(
                account_id,
                user_id
              ) ==
@@ -30,13 +29,13 @@ defmodule DoubleEntryLedgerTest do
     # test "it should create a system revenue equity account" do
     #   account_id = account_id_sequence()
 
-    #   assert DoubleEntryLedger.create_account(
+    #   assert Ledger.create_account(
     #            account_id,
     #            Account.system_revenue_equity_code()
     #          ) ==
     #            {:ok, []}
 
-    #   assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
+    #   assert {:ok, account} = Ledger.lookup_account(account_id)
     #   assert account.id == ID.from_int(account_id)
     #   assert account.ledger == @default_ledger
     #   assert account.code == Account.system_revenue_equity_code()
@@ -48,13 +47,13 @@ defmodule DoubleEntryLedgerTest do
     # test "it should create cash external asset account" do
     #   account_id = account_id_sequence()
 
-    #   assert DoubleEntryLedger.create_account(
+    #   assert Ledger.create_account(
     #            account_id,
     #            Account.cash_external_asset_code()
     #          ) ==
     #            {:ok, []}
 
-    #   assert {:ok, account} = DoubleEntryLedger.lookup_account(account_id)
+    #   assert {:ok, account} = Ledger.lookup_account(account_id)
     #   assert account.id == ID.from_int(account_id)
     #   assert account.ledger == @default_ledger
     #   assert account.code == Account.cash_external_asset_code()
@@ -64,24 +63,24 @@ defmodule DoubleEntryLedgerTest do
     # end
   end
 
-  describe "deposit/3" do
+  describe "deposit_to_user_account/3" do
     setup do
       account_id = account_id_sequence()
       user_id = user_id_sequence()
 
-      assert DoubleEntryLedger.create_user_account(account_id, user_id) == {:ok, []}
+      assert Ledger.create_user_account(account_id, user_id) == {:ok, []}
 
       {:ok, account_id: account_id}
     end
 
-    test "it should deposit", %{account_id: user_account_id} do
+    test "it should deposit to a user account", %{account_id: user_account_id} do
       # given
 
       amount = 100
       deposit_id = deposit_id_sequence()
 
       # when
-      assert DoubleEntryLedger.deposit(deposit_id, user_account_id, amount) == :ok
+      assert Ledger.deposit_to_user_account(deposit_id, user_account_id, amount) == :ok
 
       # credit for liability account
       assert {:ok,
