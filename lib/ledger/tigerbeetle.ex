@@ -19,7 +19,7 @@ defmodule Ledger.Tigerbeetle do
     answer = Enum.to_list(stream)
 
     case answer do
-      [] -> {:ok, answer}
+      [] -> :ok
       reason -> {:error, reason}
     end
   end

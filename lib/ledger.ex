@@ -115,13 +115,20 @@ defmodule Ledger do
       flags: struct(TigerBeetlex.TransferFlags, %{})
     }
     |> Tigerbeetle.create_transfer()
+    |> then(fn
+      {:error, [%TigerBeetlex.CreateTransfersResult{result: :exceeds_credits}]} ->
+        {:error, :not_enough_balance}
+
+      {:ok, _} ->
+        :ok
+    end)
   end
 
   defp ensure_game_bet_pool_liability_account(game_id, ledger) do
     code = Account.game_bet_pool_liability_code()
 
     with {:error, :not_found} <- Tigerbeetle.query_accounts(ledger, code, game_id, 1),
-         {:ok, _} <-
+         :ok <-
            Tigerbeetle.create_account(game_id, ledger, code, @liability_account_flags, game_id) do
       {:ok, %{id: ID.from_int(game_id)}}
     else
@@ -134,7 +141,7 @@ defmodule Ledger do
     cash_account_id = cash_asset_account_id()
 
     with {:error, :not_found} <- Tigerbeetle.query_accounts(ledger, code, cash_account_id, 1),
-         {:ok, _} <-
+         :ok <-
            Tigerbeetle.create_account(cash_account_id, ledger, code, %{}, cash_account_id) do
       {:ok, %{id: ID.from_int(cash_account_id)}}
     else

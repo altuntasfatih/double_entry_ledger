@@ -29,6 +29,21 @@ defmodule LedgerTest.DataCase do
     end
   end
 
+  def create_user_account() do
+    user_account_id = LedgerTest.Factory.account_id_sequence()
+    assert :ok = Ledger.create_user_account(user_account_id, user_account_id)
+    user_account_id
+  end
+
+  def deposit_to_user_account(user_account_id, amount) do
+    assert :ok =
+             Ledger.deposit_to_user_account(
+               LedgerTest.Factory.transaction_id_sequence(),
+               user_account_id,
+               amount
+             )
+  end
+
   def set_new_cash_asset_account do
     cash_asset_account_id = LedgerTest.Factory.system_account_id_sequence()
 
