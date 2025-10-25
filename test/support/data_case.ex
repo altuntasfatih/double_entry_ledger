@@ -29,15 +29,14 @@ defmodule LedgerTest.DataCase do
     end
   end
 
-  def set_cash_asset_account_id do
-    cash_asset_account_id = LedgerTest.Factory.cash_asset_account_id_sequence()
+  def set_new_cash_asset_account do
+    cash_asset_account_id = LedgerTest.Factory.system_account_id_sequence()
 
     details =
       Application.get_env(:ledger, :ledger_details)
       |> Keyword.put(:cash_asset_account_id, cash_asset_account_id)
 
     :ok = Application.put_env(:ledger, :ledger_details, details)
-
     cash_asset_account_id
   end
 

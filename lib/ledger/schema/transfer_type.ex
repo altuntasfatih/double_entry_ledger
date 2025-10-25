@@ -5,9 +5,11 @@ defmodule Ledger.Schema.TransferType do
 
   @code %{
     :deposit => 1,
-    :withdrawal => 2
+    :withdrawal => 2,
+    :bet => 3
   }
 
   def deposit, do: @code[:deposit]
   def withdrawal, do: @code[:withdrawal]
+  def bet, do: @code[:bet]
 end
