@@ -93,20 +93,27 @@ defmodule Ledger do
     end
   end
 
-  def bet_on_game(bet_id, wallet_id, game_id, amount) do
-    with {:ok, %{id: user_liability_id, ledger: ledger}} <-
-           fetch_account(wallet_id, user_liability_code()),
-         {:ok, %{id: game_bet_pool_liability_id}} <-
-           ensure_game_bet_pool_liability_account(game_id, ledger),
-         {:ok, []} <-
-           bet(bet_id, user_liability_id, game_bet_pool_liability_id, ledger, amount) do
-      :ok
+  def fetch_transfer(transfer_id, transfer_type) do
+    case Tigerbeetle.lookup_transfers([transfer_id]) do
+      {:ok, [%{code: ^transfer_type} = transfer]} -> {:ok, transfer}
+      _ -> {:error, :transfer_not_found}
     end
   end
 
-  defp bet(bet_id, user_liability_id, game_bet_pool_liability_id, ledger, amount) do
+  def bet_on_game(user_account_id, game_account_id, amount) do
+    with {:ok, %{id: user_liability_id, ledger: ledger}} <-
+           fetch_account(user_account_id, user_liability_code()),
+         {:ok, %{id: game_bet_pool_liability_id}} <-
+           ensure_game_bet_pool_liability_account(game_account_id, ledger) do
+      bet(user_liability_id, game_bet_pool_liability_id, ledger, amount)
+    end
+  end
+
+  defp bet(user_liability_id, game_bet_pool_liability_id, ledger, amount) do
+    bet_id = ID.generate()
+
     %TigerBeetlex.Transfer{
-      id: <<bet_id::128>>,
+      id: bet_id,
       debit_account_id: user_liability_id,
       credit_account_id: game_bet_pool_liability_id,
       ledger: ledger,
@@ -119,9 +126,44 @@ defmodule Ledger do
       {:error, [%TigerBeetlex.CreateTransfersResult{result: :exceeds_credits}]} ->
         {:error, :not_enough_balance}
 
-      {:ok, _} ->
-        :ok
+      :ok ->
+        {:ok, bet_id}
     end)
+  end
+
+  def win_on_game(bet_id, win_amount) do
+    with {:ok,
+          %{credit_account_id: game_bet_pool_liability_id, debit_account_id: user_liability_id} =
+            bet_transfer} <-
+           fetch_transfer(bet_id, TransferType.bet()) do
+      with {:ok, %{id: cash_asset_id}} <-
+             fetch_account(cash_asset_account_id(), Account.cash_asset_code()) do
+        transfer_one = %TigerBeetlex.Transfer{
+          id: ID.generate(),
+          credit_account_id: user_liability_id,
+          debit_account_id: game_bet_pool_liability_id,
+          ledger: bet_transfer.ledger,
+          code: TransferType.win(),
+          amount: bet_transfer.amount,
+          flags: struct(TigerBeetlex.TransferFlags, %{})
+        }
+
+        remaining_amount = win_amount - bet_transfer.amount
+
+        transfer_two = %TigerBeetlex.Transfer{
+          id: ID.generate(),
+          credit_account_id: user_liability_id,
+          debit_account_id: cash_asset_id,
+          ledger: bet_transfer.ledger,
+          code: TransferType.win(),
+          amount: remaining_amount,
+          flags: struct(TigerBeetlex.TransferFlags, %{})
+        }
+
+        [transfer_one, transfer_two]
+        |> Tigerbeetle.create_transfers()
+      end
+    end
   end
 
   defp ensure_game_bet_pool_liability_account(game_id, ledger) do

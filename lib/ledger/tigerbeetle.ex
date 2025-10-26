@@ -24,15 +24,15 @@ defmodule Ledger.Tigerbeetle do
     end
   end
 
-  def create_transfer(t), do: create_transfers([t])
-
-  def create_transfers([_] = transfers) do
+  def create_transfers(transfers) when is_list(transfers) do
     case TigerBeetlex.Connection.create_transfers(get_connection_name!(), transfers) do
-      {:ok, []} -> {:ok, []}
-      {:ok, errors} -> {:error, errors}
-      {:error, error} -> {:error, error}
+      {:ok, []} -> :ok
+      {:ok, error} -> {:error, error}
+      err -> {:error, err}
     end
   end
+
+  def create_transfer(t), do: create_transfers([t])
 
   def lookup_transfers(ids) do
     ids =
@@ -44,7 +44,6 @@ defmodule Ledger.Tigerbeetle do
     case TigerBeetlex.Connection.lookup_transfers(get_connection_name!(), ids) do
       {:ok, transfers} when transfers != [] -> {:ok, transfers}
       {:ok, []} -> {:error, :transfers_not_found}
-      {:error, error} -> {:error, error}
     end
   end
 
